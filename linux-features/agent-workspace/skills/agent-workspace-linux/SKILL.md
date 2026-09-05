@@ -10,9 +10,7 @@ the `agent-workspace-linux` MCP server. The workspace runs apps, browser
 automation, screenshots, clipboard, and input inside its own hidden display,
 never the user's real desktop, focus, or host Chrome.
 
-This skill is the lightweight entry point. The MCP exposes many tools; do not
-load, list, or paste them all up front. Route by phase and ask the host to load
-only the tool schemas needed for the next action.
+Load only the tool schemas needed for the current phase.
 
 ## Critical Boundaries
 
@@ -23,9 +21,6 @@ Reconnect/Smoke test, profile creation, workspace start/stop, and viewer launch.
 Do not send users to generic MCP settings, general configuration pages, or
 `~/.codex/config.toml` for normal Codex for Linux setup.
 
-Skip unless: the host is Codex for Linux and the task is setup, permission
-changes, reconnect/restart, or the workspace tools are unavailable.
-
 ### Keep tools progressive
 The bundled installer is skill-first. `./install.sh` installs this skill under
 `~/.codex/skills` by default and leaves generic Codex MCP config untouched
@@ -33,16 +28,10 @@ unless the user explicitly chooses `--codex-configure` or `--permissions`.
 For migration only, `./install.sh --clean-codex-config` removes stale generic
 Codex MCP entries left by older installs; restart or reconnect Codex afterward.
 
-Skip unless: the user asks how to install/register the backend or why the tool
-family should not be loaded at startup.
-
 ### Never target the host desktop
 Use this skill only for the hidden workspace. For the user's real Linux desktop,
 real Chrome profile, existing tabs, or host focus/mouse/keyboard, use the
 appropriate host-desktop or browser tool instead.
-
-Skip unless: the requested action can run inside the isolated workspace display
-or workspace-owned browser.
 
 ## When To Use
 
@@ -51,8 +40,7 @@ or workspace-owned browser.
 - Observation of sandboxed windows, logs, events, screenshots, or artifacts.
 - Cleanup of stale or orphaned agent workspaces.
 
-Skip unless: the user task requires running or driving a real GUI app/browser in
-isolation. For pure code, shell, or file edits, do not start a workspace.
+For pure code, shell, or file edits, do not start a workspace.
 
 ## Permission Model
 
@@ -65,10 +53,8 @@ isolation. For pure code, shell, or file edits, do not start a workspace.
 - **Live control**: `mcp_control_state` read-only/paused/active is a
   best-effort runtime control, not the authoritative security boundary.
 - **Real-world actions**: checkout, purchases, account changes, and messages
-  require explicit user approval. Keep drafting separate from final action.
-
-Skip unless: you are about to start a workspace, open a profile, launch/run an
-app, send input, or act on an external account/site.
+  require authorization. Use authorization already given for the task; otherwise
+  prepare the action and ask immediately before it.
 
 ## Phase Router
 
@@ -85,8 +71,7 @@ Always orient before mutating.
 | Viewer/control | `mcp_control_state`, `mcp_control_update`, `workspace_open_viewer`, `workspace_list_viewers`, `workspace_close_viewer` |
 | Teardown | `workspace_stop`, `workspace_kill_app`, `workspace_cleanup_stale` |
 
-Skip unless: the current phase needs one of the listed capabilities. Do not load
-schemas for later phases until the plan reaches them.
+Do not load schemas for later phases until the plan reaches them.
 
 ## Safe Workflow
 
@@ -102,8 +87,7 @@ schemas for later phases until the plan reaches them.
 6. Stop: use `workspace_stop` when finished; use `workspace_cleanup_stale` for
    orphaned runtimes.
 
-Skip unless: each step's precondition is visible in the previous tool result
-(workspace id, app id, target window, browser target, or explicit user approval).
+Each step's target must be established by the previous tool result.
 
 ## Browser Tasks
 
@@ -112,9 +96,7 @@ Use the workspace-owned browser over its loopback DevTools endpoint. Start with
 with `workspace_browser_snapshot` or `workspace_browser_search_results`, then
 navigate or click with browser tools.
 
-Skip unless: the task is web/browser automation that can run in the isolated
-workspace. Do not attach to host Chrome, Playwright, or Computer Use as a
-shortcut.
+Do not attach to host Chrome, Playwright, or Computer Use for this workspace.
 
 ## Do NOT
 
@@ -123,23 +105,9 @@ shortcut.
   Agent Workspace setup.
 - Do not start a workspace without `ack_hidden_workspace=true` and a `purpose`.
 - Do not send input to or screenshot the user's real desktop.
-- Do not perform purchases, checkout, account changes, or sends without explicit
-  user approval.
+- Do not perform purchases, checkout, account changes, or sends without user
+  authorization.
 - Do not leave workspaces running after the task.
-
-## Example Trajectory
-
-Task: "QA the settings dialog of myapp."
-
-1. `mcp_agent_context` and `mcp_task_plan` for app-QA.
-2. `mcp_permissions` to confirm the active boundary.
-3. `workspace_start` with `ack_hidden_workspace=true` and purpose
-   `"QA myapp settings"`.
-4. `workspace_launch_app` with the app command.
-5. `workspace_observe` to find the window.
-6. `workspace_click` / `workspace_type_text` to exercise Settings.
-7. `workspace_screenshot` and `workspace_read_app_log` for evidence.
-8. `workspace_stop`.
 
 ## Constraints
 

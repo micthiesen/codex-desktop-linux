@@ -60,8 +60,9 @@ client, implemented by the Rust `codex-record-replay-linux` backend.
 10. Use the draft prompt and the bundle evidence to create or update a normal
    `SKILL.md`. Prefer stable app names, URLs, semantic UI labels, and data
    shape descriptions over literal coordinates.
-11. Call `inspect_skill` before import. Call `import_skill` only after the user
-   approves the generated skill.
+11. Call `inspect_skill` before import. A request to record a workflow and turn
+   it into a reusable skill authorizes import. Ask only if the destination,
+   replacement target, or retained private content is materially ambiguous.
 
 ## Guardrails
 
